@@ -9,7 +9,7 @@ import Foundation
 
 public enum CUEFileType {
     case UNKNOWN, WAVE, MP3
-    static func from(_ name: String) -> CUEFileType {
+    static func fromString(_ name: String) -> CUEFileType {
         switch name.uppercased() {
         case "WAVE":
             return .WAVE

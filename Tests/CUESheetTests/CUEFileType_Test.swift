@@ -9,7 +9,7 @@ import XCTest
 @testable import CUESheet
 final class CUEFileType_Test: XCTestCase {
 
-    func test_UNKNOWN() throws {
+    func test_FromString() throws {
         let names = ["wave", "WAVE", "Wave",
                      "MP3", "mp3", "Mp3",
                      "unknown", "any", "Whatever"]
@@ -19,7 +19,7 @@ final class CUEFileType_Test: XCTestCase {
         for i in 0..<names.count {
             let name = names[i]
             let expected = expected[i]
-            let actual = CUEFileType.from(name)
+            let actual = CUEFileType.fromString(name)
             XCTAssertEqual(actual, expected, "expected: \(expected), actual: \(actual)")
         }
     }
