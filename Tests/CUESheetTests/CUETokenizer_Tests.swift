@@ -113,7 +113,7 @@ final class CUETokenizer_Tests: XCTestCase {
         XCTAssertFalse(tokenizer.hasNext())
     }
 
-    func test_start_not_0() throws {
+    func test_start_with_whitespaces() throws {
         let source = " \t one \t\t\t two\t\t   three\n"
         let tokenizer = CUETokenizer(text: source)
         _ = tokenizer.next()
@@ -132,7 +132,7 @@ final class CUETokenizer_Tests: XCTestCase {
     func test_ending() throws {
         let source = "  one \ttwo   \n"
         let tokenizer = CUETokenizer(text: source)
-        let one = tokenizer.next()
+        _ = tokenizer.next()
         let ending = tokenizer.ending()
         XCTAssertEqual("two", ending)
     }
@@ -143,12 +143,55 @@ final class CUETokenizer_Tests: XCTestCase {
         let ending = tokenizer.ending()
         XCTAssertEqual("two", ending)
     }
+    func test_next_double_quotes() throws {
+        let source = " one \"two  three\" four"
+        let tokenizer = CUETokenizer(text: source)
+        let one = tokenizer.next()
+        XCTAssertEqual(createExpected(source: source, name: "one", offset: 1), one)
+        let actual = tokenizer.next()
+        XCTAssertEqual(createExpected(source: source, name: "\"two  three\"", offset: 5), actual)
+        let four = tokenizer.next()
+        XCTAssertEqual(createExpected(source: source, name: "four", offset: 18), four)
+    }
+    func test_next_single_quotes() throws {
+        let source = " one 'two  three' four"
+        let tokenizer = CUETokenizer(text: source)
+        let one = tokenizer.next()
+        XCTAssertEqual(createExpected(source: source, name: "one", offset: 1), one)
+        let actual = tokenizer.next()
+        XCTAssertEqual(createExpected(source: source, name: "'two  three'", offset: 5), actual)
+        let four = tokenizer.next()
+        XCTAssertEqual(createExpected(source: source, name: "four", offset: 18), four)
+    }
+    func test_lastToken() throws {
+        let source = "one two  "
+        let tokenizer = CUETokenizer(text: source)
+        let one = tokenizer.next()
+        XCTAssertNotNil(tokenizer.lastToken)
+        XCTAssertEqual(one, tokenizer.lastToken)
+        let two = tokenizer.next()
+        XCTAssertNotNil(tokenizer.lastToken)
+        XCTAssertEqual(two, tokenizer.lastToken)
+        let noToken = tokenizer.next()
+        XCTAssertNil(noToken)
+        XCTAssertNotNil(tokenizer.lastToken)
+        XCTAssertEqual(two, tokenizer.lastToken)
+    }
 
-    func testPerformanceExample() throws {
+    func testPerformance_next() throws {
         // This is an example of a performance test case.
+        let source = "\t one\ttwo  three\t  four \tfive\t\t   six\n"
+        let tokenizer = CUETokenizer(text: source)
+        var tokens: [CUEToken] = []
         self.measure {
             // Put the code you want to measure the time of here.
+            while tokenizer.hasNext() {
+                if let token = tokenizer.next() {
+                    tokens.append(token)
+                }
+            }
         }
+        XCTAssertEqual(6, tokens.count)
     }
 
 }

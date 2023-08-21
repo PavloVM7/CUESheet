@@ -7,6 +7,9 @@
 
 import Foundation
 
+fileprivate let doubleQuoter: Character = "\""
+fileprivate let singleQuoter: Character = "'"
+
 struct CUEToken: CustomStringConvertible, Equatable {
     let name: String
     let start: String.Index
@@ -22,18 +25,18 @@ struct CUEToken: CustomStringConvertible, Equatable {
 
 class CUETokenizer: CustomStringConvertible {
     let text: String
-    internal private(set) var lastToken: CUEToken
+    internal private(set) var lastToken: CUEToken?
     var position: String.Index
     var description: String {
-        "CUETokenizer{lastToken: \(self.lastToken), position: \(self.text.distance(from: self.text.startIndex, to: self.position)), text:'\(self.text)'}"
+        "CUETokenizer{lastToken: \(String(describing: self.lastToken)), position: \(self.text.distance(from: self.text.startIndex, to: self.position)), text:'\(self.text)'}"
     }
     convenience init(text: String) {
         self.init(text: text, position: text.startIndex)
     }
     init(text: String, position: String.Index) {
         self.text = text
-        self.lastToken = CUEToken(name: "", start: "".startIndex)
         self.position = position
+        self.lastToken = nil
     }
     func hasNext() -> Bool {
         return self.position < text.endIndex
@@ -42,20 +45,35 @@ class CUETokenizer: CustomStringConvertible {
         var token = ""
         var start: String.Index?
         let end = self.text.endIndex
+        var quotes:UInt8 = 0
         while self.position < end {
             let ch = self.text[self.position]
             if !ch.isWhitespace {
                 token += String(ch)
                 if start == nil {
                     start = self.position
+                    if ch.isDoubleQuote {
+                        quotes = 2
+                    } else if ch.isSingleQuote {
+                        quotes = 1
+                    }
+                } else if quotes != 0 {
+                    if (ch.isDoubleQuote && quotes == 2) || (ch.isSingleQuote && quotes == 1) {
+                        quotes = 0
+                    }
                 }
             } else if start != nil {
-                break
+                if quotes == 0 {
+                    break
+                } else {
+                    token += String(ch)
+                }
             }
             self.position = text.index(after: self.position)
         }
         if let start {
-            return CUEToken(name: token, start: start)
+            self.lastToken = CUEToken(name: token, start: start)
+            return self.lastToken
         }
         return nil
     }
@@ -63,4 +81,9 @@ class CUETokenizer: CustomStringConvertible {
         String(self.text[self.position...self.text.index(before: self.text.endIndex)])
             .trimmingCharacters(in: .whitespacesAndNewlines)
     }
+}
+
+extension Character {
+    var isSingleQuote: Bool {self == singleQuoter}
+    var isDoubleQuote: Bool {self == doubleQuoter}
 }
